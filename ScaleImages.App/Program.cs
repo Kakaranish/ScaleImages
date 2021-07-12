@@ -6,10 +6,10 @@ namespace ScaleImages.App
     {
         public static async Task Main(string[] args)
         {
-            var imageResizer = new ImageResizer();
+            var imageResizer = new ImageDirectoryResizer();
 
             var imgRootDirPath = @"E:\Misc\zdjecia-compressed";
-            await imageResizer.ResizeImagesInDirsRecursively(imgRootDirPath, 0.5m);
+            await imageResizer.DownscaleImages(imgRootDirPath, 4);
         }
     }
 }
