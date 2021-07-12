@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ScaleImages
 {
     public class ImageResizer
     {
+        private readonly SemaphoreSlim _semaphore;
+
         private readonly string[] _validExtensions = {
             ".jpg",
             ".jpeg",
@@ -16,6 +19,17 @@ namespace ScaleImages
             ".bmp",
             ".gif"
         };
+
+        public ImageResizer() : this(int.MaxValue)
+        {
+        }
+
+        public ImageResizer(int degreeOfParallelism)
+        {
+            if (degreeOfParallelism <= 0) throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism));
+
+            _semaphore = new SemaphoreSlim(degreeOfParallelism);
+        }
 
         public async Task ResizeImagesInDirsRecursively(string rootDir, decimal ratio)
         {
@@ -28,7 +42,10 @@ namespace ScaleImages
             Directory.CreateDirectory(outputDirPath);
 
             var resizeTasks = await ProcessDirectory(rootDir, rootDir, outputDirPath, ratio);
-            await Task.WhenAll(resizeTasks);
+            foreach (var resizeTask in resizeTasks)
+            {
+                await resizeTask;
+            }
         }
 
         private async Task<IEnumerable<Task>> ProcessDirectory(string rootPath, string dirPath, string outputDirRootPath, decimal ratio)
@@ -56,16 +73,20 @@ namespace ScaleImages
             var fileExtension = Path.GetExtension(filePath);
             if (!_validExtensions.Contains(fileExtension)) return;
 
+            await _semaphore.WaitAsync();
+
             await Task.Run(() =>
             {
-                var imageToProcess = Image.FromFile(filePath);
+                using var imageToProcess = Image.FromFile(filePath);
                 var newImageSize = new Size((int)Math.Floor(imageToProcess.Size.Width * ratio),
                     (int)Math.Floor(imageToProcess.Size.Height * ratio));
-                var processedImage = (Image)new Bitmap(imageToProcess, newImageSize);
 
+                using var processedImage = (Image)new Bitmap(imageToProcess, newImageSize);
                 var outputFilePath = Path.Combine(outputDirPath, Path.GetFileName(filePath));
                 processedImage.Save(outputFilePath, imageToProcess.RawFormat);
             });
+
+            _semaphore.Release();
         }
     }
 }
