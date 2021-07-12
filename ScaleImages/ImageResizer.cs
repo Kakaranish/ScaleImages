@@ -31,7 +31,8 @@ namespace ScaleImages
 
         public Image DownscaleImage(Image image, decimal downscaleTimes)
         {
-            if (downscaleTimes <= 1) throw new ArgumentOutOfRangeException(nameof(downscaleTimes));
+            if (image == null) throw new ArgumentNullException(nameof(image));
+            if (downscaleTimes < 1) throw new ArgumentOutOfRangeException(nameof(downscaleTimes));
             if (downscaleTimes == 1) return image; // Nothing to scale
 
             var newImageSize = new Size((int)Math.Floor(image.Size.Width / downscaleTimes),

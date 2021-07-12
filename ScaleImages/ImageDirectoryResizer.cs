@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ScaleImages
 {
-    public class ImageDirectoryResizer
+    public class ImageDirectoryResizer : IImageDirectoryResizer
     {
         private static readonly HashSet<string> ValidExtensions = new(new[]
         {
@@ -53,7 +53,6 @@ namespace ScaleImages
 
             await ProcessImages(rootDir, ResizeAction);
         }
-
 
         private async Task ProcessImages(string rootDir, Func<Image, Image> resizeAction)
         {
