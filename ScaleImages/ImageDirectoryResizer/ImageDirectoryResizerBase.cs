@@ -2,13 +2,18 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ScaleImages.ImageResizing;
 
-namespace ScaleImages
+namespace ScaleImages.ImageDirectoryResizer
 {
-    public class ImageDirectoryResizer : IImageDirectoryResizer
+    public abstract class ImageDirectoryResizerBase
     {
+        private readonly SemaphoreSlim _semaphore;
+        private readonly IImageResizer _imageResizer;
+
         private static readonly HashSet<string> ValidExtensions = new(new[]
         {
             ".jpg",
@@ -18,19 +23,19 @@ namespace ScaleImages
             ".gif"
         });
 
-        private readonly SemaphoreSlim _semaphore;
-        private readonly ImageResizer _imageResizer;
-
-        public ImageDirectoryResizer() : this(int.MaxValue)
+        protected ImageDirectoryResizerBase() : this(int.MaxValue)
         {
         }
 
-        public ImageDirectoryResizer(int degreeOfParallelism)
+        protected ImageDirectoryResizerBase(int degreeOfParallelism) : this(new ImageResizer())
         {
             if (degreeOfParallelism <= 0) throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism));
-
             _semaphore = new SemaphoreSlim(degreeOfParallelism);
-            _imageResizer = new ImageResizer();
+        }
+
+        internal ImageDirectoryResizerBase(IImageResizer imageResizer)
+        {
+            _imageResizer = imageResizer;
         }
 
         public async Task DownscaleImages(string rootDir, decimal downscaleTimes)
@@ -54,7 +59,10 @@ namespace ScaleImages
             await ProcessImages(rootDir, ResizeAction);
         }
 
-        private async Task ProcessImages(string rootDir, Func<Image, Image> resizeAction)
+        protected abstract Task<IEnumerable<Task>> CreateImageProcessingTasks(string rootPath, string dirPath,
+            string outputDirRootPath, Func<Image, Image> resizeAction);
+
+        protected async Task ProcessImages(string rootDir, Func<Image, Image> resizeAction)
         {
             if (!Directory.Exists(rootDir))
             {
@@ -64,32 +72,14 @@ namespace ScaleImages
             var outputDirPath = rootDir + "-" + DateTime.Now.ToString("yy-MM-ddTHH-mm-ss");
             Directory.CreateDirectory(outputDirPath);
 
-            var resizeTasks = await ExtractProcessingTasksFromDirectory(rootDir, rootDir, outputDirPath, resizeAction);
+            var resizeTasks = (await CreateImageProcessingTasks(rootDir, rootDir, outputDirPath, resizeAction)).ToList();
+
+            Console.WriteLine($"[INFO] {resizeTasks.Count} images to resize\n\n");
+
             await Task.WhenAll(resizeTasks);
         }
 
-        private async Task<IEnumerable<Task>> ExtractProcessingTasksFromDirectory(string rootPath, string dirPath,
-            string outputDirRootPath, Func<Image, Image> resizeAction)
-        {
-            var outputDir = Path.GetFullPath(Path.Combine(outputDirRootPath, Path.GetRelativePath(rootPath, dirPath)));
-            if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
-
-            var tasks = new List<Task>();
-
-            foreach (var filePath in Directory.GetFiles(dirPath))
-            {
-                tasks.Add(ProcessFile(filePath, outputDir, resizeAction));
-            }
-
-            foreach (var subDirectory in Directory.GetDirectories(dirPath))
-            {
-                tasks.AddRange(await ExtractProcessingTasksFromDirectory(rootPath, subDirectory, outputDirRootPath, resizeAction));
-            }
-
-            return tasks;
-        }
-
-        private async Task ProcessFile(string filePath, string outputDirPath, Func<Image, Image> resizeAction)
+        protected async Task ProcessFile(string filePath, string outputDirPath, Func<Image, Image> resizeAction)
         {
             await _semaphore.WaitAsync();
 
@@ -103,6 +93,8 @@ namespace ScaleImages
 
                 var outputFilePath = Path.Combine(outputDirPath, Path.GetFileName(filePath));
                 processedImage.Save(outputFilePath, imageToProcess.RawFormat);
+
+                Console.WriteLine($"[INFO] Processed {filePath}");
 
                 _semaphore.Release();
             });

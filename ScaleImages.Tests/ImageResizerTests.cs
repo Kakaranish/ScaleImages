@@ -2,6 +2,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.Drawing;
+using ScaleImages.ImageResizing;
 
 namespace ScaleImages.Tests
 {

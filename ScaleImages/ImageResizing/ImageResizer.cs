@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using ScaleImages.ImageScaling;
 
-namespace ScaleImages
+namespace ScaleImages.ImageResizing
 {
-    public class ImageResizer
+    public class ImageResizer : IImageResizer
     {
         private readonly IImageScaler _imageScaler;
 

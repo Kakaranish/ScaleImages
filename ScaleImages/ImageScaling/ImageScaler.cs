@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace ScaleImages
+namespace ScaleImages.ImageScaling
 {
     internal class ImageScaler : IImageScaler
     {

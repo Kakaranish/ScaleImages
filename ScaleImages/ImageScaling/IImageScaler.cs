@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace ScaleImages
+namespace ScaleImages.ImageScaling
 {
     internal interface IImageScaler
     {

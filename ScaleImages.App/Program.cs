@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using ScaleImages.ImageDirectoryResizer;
 
 namespace ScaleImages.App
 {
@@ -6,7 +7,7 @@ namespace ScaleImages.App
     {
         public static async Task Main(string[] args)
         {
-            var imageResizer = new ImageDirectoryResizer();
+            var imageResizer = new RecursiveImageDirectoryResizer();
 
             var imgRootDirPath = @"E:\Misc\zdjecia-compressed";
             await imageResizer.DownscaleImages(imgRootDirPath, 4);
