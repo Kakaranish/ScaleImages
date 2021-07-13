@@ -5,20 +5,15 @@ namespace ScaleImages
 {
     public class ImageResizer
     {
-        public Image ResizeImageByWidth(Image image, int width)
-        {
-            if (image == null) throw new ArgumentNullException(nameof(image));
-            var scaleFactor = image.Width < width ? 1 : (decimal)width / image.Width;
+        private readonly IImageScaler _imageScaler;
 
-            return InternalScaleBy(image, scaleFactor);
+        internal ImageResizer(IImageScaler imageScaler)
+        {
+            _imageScaler = imageScaler ?? throw new ArgumentNullException(nameof(imageScaler));
         }
 
-        public Image ResizeImageByHeight(Image image, int height)
+        public ImageResizer() : this(new ImageScaler())
         {
-            if (image == null) throw new ArgumentNullException(nameof(image));
-            var scaleFactor = image.Height < height ? 1 : (decimal)height / image.Height;
-
-            return InternalScaleBy(image, scaleFactor);
         }
 
         public Image DownscaleImage(Image image, decimal downscaleTimes)
@@ -27,18 +22,27 @@ namespace ScaleImages
             if (downscaleTimes < 1) throw new ArgumentOutOfRangeException(nameof(downscaleTimes));
 
             var scaleFactor = 1 / downscaleTimes;
-            return InternalScaleBy(image, scaleFactor);
+            return _imageScaler.ScaleBy(image, scaleFactor);
         }
 
-        private static Image InternalScaleBy(Image image, decimal scaleFactor)
+        public Image ResizeImageByWidth(Image image, int width)
         {
-            if (scaleFactor == 1) return image; // Nothing to scale
+            if (image == null) throw new ArgumentNullException(nameof(image));
+            if (width < 1) throw new ArgumentOutOfRangeException(nameof(width));
 
-            var newImageSize = new Size((int)Math.Floor(image.Size.Width * scaleFactor),
-                (int)Math.Floor(image.Size.Height * scaleFactor));
-            var resizedImage = (Image)new Bitmap(image, newImageSize);
+            var scaleFactor = image.Width < width ? 1 : (decimal)width / image.Width;
 
-            return resizedImage;
+            return _imageScaler.ScaleBy(image, scaleFactor);
+        }
+
+        public Image ResizeImageByHeight(Image image, int height)
+        {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+            if (height < 1) throw new ArgumentOutOfRangeException(nameof(height));
+
+            var scaleFactor = image.Height < height ? 1 : (decimal)height / image.Height;
+
+            return _imageScaler.ScaleBy(image, scaleFactor);
         }
     }
 }
