@@ -7,9 +7,12 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
+        var extractedConsoleArguments = ConsoleArgumentsExtractor.Extract(args);
+        
         var imageResizer = new RecursiveImageDirectoryResizer();
-
-        var imgRootDirPath = @"E:\Misc\zdjecia-compressed";
-        await imageResizer.DownscaleImages(imgRootDirPath, 4);
+        
+        await imageResizer.DownscaleImages(
+            extractedConsoleArguments.SourceDirPath, 
+            extractedConsoleArguments.DownscaleRatio);
     }
 }

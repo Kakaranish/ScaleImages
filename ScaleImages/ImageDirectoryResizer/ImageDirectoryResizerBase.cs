@@ -51,7 +51,6 @@ public abstract class ImageDirectoryResizerBase
 
         await ProcessImages(rootDir, ResizeAction);
     }
-
     public async Task ResizeImagesByHeight(string rootDir, int height)
     {
         Image ResizeAction(Image image) => _imageResizer.ResizeImageByHeight(image, height);
