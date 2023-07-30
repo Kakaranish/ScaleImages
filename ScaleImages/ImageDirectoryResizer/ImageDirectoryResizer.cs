@@ -25,7 +25,7 @@ namespace ScaleImages.ImageDirectoryResizer
 
         #endregion
 
-        protected override async Task<IEnumerable<Task>> CreateImageProcessingTasks(string rootPath, string dirPath,
+        protected override Task<IEnumerable<Task>> CreateImageProcessingTasks(string rootPath, string dirPath,
             string outputDirRootPath, Func<Image, Image> resizeAction)
         {
             var outputDir = Path.GetFullPath(Path.Combine(outputDirRootPath, Path.GetRelativePath(rootPath, dirPath)));
@@ -38,7 +38,7 @@ namespace ScaleImages.ImageDirectoryResizer
                 tasks.Add(ProcessFile(filePath, outputDir, resizeAction));
             }
 
-            return tasks;
+            return Task.FromResult<IEnumerable<Task>>(tasks);
         }
     }
 }
