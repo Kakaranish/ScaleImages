@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Drawing;
 
-namespace ScaleImages.ImageScaling
+namespace ScaleImages.ImageScaling;
+
+internal class ImageScaler : IImageScaler
 {
-    internal class ImageScaler : IImageScaler
+    public Image ScaleBy(Image image, decimal scaleFactor)
     {
-        public Image ScaleBy(Image image, decimal scaleFactor)
-        {
-            if (scaleFactor <= 0) throw new ArgumentOutOfRangeException(nameof(scaleFactor));
-            if (scaleFactor == 1) return image; // Nothing to scale
+        if (scaleFactor <= 0) throw new ArgumentOutOfRangeException(nameof(scaleFactor));
+        if (scaleFactor == 1) return image; // Nothing to scale
 
-            var newImageSize = new Size((int)Math.Floor(image.Size.Width * scaleFactor),
-                (int)Math.Floor(image.Size.Height * scaleFactor));
-            var resizedImage = (Image)new Bitmap(image, newImageSize);
+        var newImageSize = new Size((int)Math.Floor(image.Size.Width * scaleFactor),
+            (int)Math.Floor(image.Size.Height * scaleFactor));
+        var resizedImage = (Image)new Bitmap(image, newImageSize);
 
-            return resizedImage;
-        }
+        return resizedImage;
     }
 }
